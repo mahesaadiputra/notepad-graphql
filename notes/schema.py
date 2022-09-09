@@ -54,7 +54,7 @@ class UpdateNotes(graphene.Mutation):
         note = Notes.objects.get(id=id,user=info.context.user.id)
         note.note = note_text
         note.save()
-        return CreateNotes(note=note)
+        return UpdateNotes(note=note)
     
 class DeleteNotes(graphene.Mutation):
     
@@ -67,7 +67,7 @@ class DeleteNotes(graphene.Mutation):
     def mutate(cls,info,id):
         note = Notes.objects.get(id=id,user=info.context.user.id)
         note.delete()
-        return CreateNotes(note=note)
+        return DeleteNotes(note=note)
     
 class Mutation(AuthMutation,graphene.ObjectType):
     create_note = CreateNotes.Field()
