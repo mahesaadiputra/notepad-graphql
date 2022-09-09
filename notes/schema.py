@@ -1,5 +1,7 @@
 from dataclasses import fields
+from email import message
 from pyexpat import model
+from sre_constants import SUCCESS
 from turtle import update
 import graphene
 from graphene_django import DjangoObjectType,DjangoListField
@@ -32,13 +34,16 @@ class CreateNotes(graphene.Mutation):
     class Arguments:
         note_text = graphene.String(required=True)
 
-    note = graphene.Field(UserNote)
+    success = graphene.Boolean()
+    new_note = graphene.String()
      
     @login_required 
     def mutate(cls,info,note_text):
         note = Notes(note=note_text,user=info.context.user)
         note.save()
-        return CreateNotes(note=note)
+        return CreateNotes(success=True,
+                           new_note =  note.note
+                           )
     
     
 class UpdateNotes(graphene.Mutation):
@@ -47,27 +52,31 @@ class UpdateNotes(graphene.Mutation):
         id = graphene.ID(required=True)
         note_text = graphene.String(required=True)
 
-    note = graphene.Field(UserNote)
+    old_note = graphene.String()
+    new_note = graphene.String()
+    success = graphene.Boolean()
      
     @login_required   
     def mutate(cls,info,note_text,id):
         note = Notes.objects.get(id=id,user=info.context.user.id)
+        old_note = note.note
         note.note = note_text
         note.save()
-        return UpdateNotes(note=note)
+        return UpdateNotes(success=True,old_note=old_note,new_note=note_text)
     
 class DeleteNotes(graphene.Mutation):
     
     class Arguments:
         id = graphene.ID(required=True)
         
-    note = graphene.Field(UserNote)
+    success = graphene.Boolean()
+    message = graphene.String()
 
     @login_required
     def mutate(cls,info,id):
         note = Notes.objects.get(id=id,user=info.context.user.id)
         note.delete()
-        return DeleteNotes(note=note)
+        return DeleteNotes(success=True,message="Note deleted")
     
 class Mutation(AuthMutation,graphene.ObjectType):
     create_note = CreateNotes.Field()
